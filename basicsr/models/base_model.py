@@ -243,8 +243,8 @@ class BaseModel:
             # set learning rate
             self._set_lr(warm_up_lr_l)
 
-    def get_current_learning_rate(self):
-        return [param_group["lr"] for param_group in self.optimizers[0].param_groups]
+    def get_current_learning_rate(self, max_cls_output_idx):
+        return [param_group["lr"] for param_group in self.optimizers[0][max_cls_output_idx].param_groups]
 
     @master_only
     def save_network(self, net, net_label, current_iter, param_key="params"):
@@ -385,7 +385,11 @@ class BaseModel:
                 "schedulers": [],
             }
             for o in self.optimizers:
-                state["optimizers"].append(o.state_dict())
+                if isinstance(o, list):
+                    state["optimizers"].append([o_.state_dict() for o_ in o])
+                else:
+                    state["optimizers"].append(o.state_dict())
+                    
             for s in self.schedulers:
                 state["schedulers"].append(s.state_dict())
             save_filename = f"{current_iter}.state"
@@ -425,7 +429,10 @@ class BaseModel:
             self.schedulers
         ), "Wrong lengths of schedulers"
         for i, o in enumerate(resume_optimizers):
-            self.optimizers[i].load_state_dict(o)
+            if isinstance(o, list):
+                self.optimizers[i] = [o_.load_state_dict(o__) for o_, o__ in zip(self.optimizers[i], o)]
+            else:
+                self.optimizers[i].load_state_dict(o)
         for i, s in enumerate(resume_schedulers):
             self.schedulers[i].load_state_dict(s)
 

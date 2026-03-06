@@ -621,16 +621,17 @@ class PromptIR_NoImg_DC(nn.Module):
 
     def forward(self, lq, features):
         # lq_feats = self.conv_embed(lq)
-        if self.downsample:
-            for i, f in enumerate(features):
-                b, n, c = f.shape
-                features[i] = (
-                    f.transpose(-1, -2)
-                    .contiguous()
-                    .view(b, c, int(math.sqrt(n)), int(math.sqrt(n)))
-                )
+        # if self.downsample:
+        #     for i, f in enumerate(features):
+        #         b, n, c = f.shape
+        #         features[i] = (
+        #             f.transpose(-1, -2)
+        #             .contiguous()
+        #             .view(b, c, int(math.sqrt(n)), int(math.sqrt(n)))
+        #         )
         lq_feats = 0
         mixing_weights = torch.nn.functional.softmax(self.mixing_weights)
+        
         for i, feature in enumerate(features):
             if i > 0 and self.downsample:
                 feature = F.interpolate(feature, scale_factor=1 / (2**i))

@@ -5,6 +5,7 @@ from os import path as osp
 import cv2
 import numpy as np
 import torch
+from torch import nn
 from torch.nn import functional as F
 from tqdm import tqdm
 
@@ -28,14 +29,23 @@ class SRModel(BaseModel):
     """Base SR model for single image super-resolution."""
 
     def __init__(self, opt):
+        print("SRModel init")
         super(SRModel, self).__init__(opt)
 
         # define network
         in_channels = opt["network_g"].get("img_channel", 3)
-        self.net_g = build_network(opt["network_g"])
-        self.net_g = self.model_to_device(self.net_g)
+        self.net_gs = nn.ModuleList(
+            [build_network(opt["network_g"]) for _ in range(5)]
+        )
+        for netg in self.net_gs:
+            netg = self.model_to_device(netg)
+            
         h = opt["network_g"].get("h", 128)
-        self.print_network(self.net_g, (1, in_channels, h, h))
+        self.print_network(self.net_gs, (1, in_channels, h, h))
+        
+        
+        self.net_dc = build_network(opt["network_dc"])
+        self.net_dc = self.model_to_device(self.net_dc)
 
         self.grad_clip = opt.get("grad_clip", 0)
 
@@ -44,7 +54,7 @@ class SRModel(BaseModel):
         if load_path is not None:
             param_key = self.opt["path"].get("param_key_g", "params")
             self.load_network(
-                self.net_g,
+                self.net_gs,
                 load_path,
                 self.opt["path"].get("strict_load_g", True),
                 param_key,
@@ -55,7 +65,7 @@ class SRModel(BaseModel):
             self.init_training_settings()
 
     def init_training_settings(self):
-        self.net_g.train()
+        self.net_gs.train()
         train_opt = self.opt["train"]
 
         self.ema_decay = train_opt.get("ema_decay", 0)
@@ -104,6 +114,14 @@ class SRModel(BaseModel):
         ):
             raise ValueError("Both pixel and perceptual losses are None.")
 
+        # define losses
+        if train_opt.get("classify_opt"):
+            self.cri_classify = build_loss(train_opt["classify_opt"]).to(self.device)
+        else:
+            self.cri_classify = None
+        if self.cri_classify is None:
+            raise ValueError("Classify loss is None.")
+        
         # set up optimizers and schedulers
         self.setup_optimizers()
         self.setup_schedulers()
@@ -111,7 +129,7 @@ class SRModel(BaseModel):
     def setup_optimizers(self):
         train_opt = self.opt["train"]
         optim_params = []
-        for k, v in self.net_g.named_parameters():
+        for k, v in self.net_gs.named_parameters():
             if v.requires_grad:
                 optim_params.append(v)
             else:
@@ -119,10 +137,27 @@ class SRModel(BaseModel):
                 logger.warning(f"Params {k} will not be optimized.")
 
         optim_type = train_opt["optim_g"].pop("type")
-        self.optimizer_g = self.get_optimizer(
+        self.optimizer_g = [self.get_optimizer(
             optim_type, optim_params, **train_opt["optim_g"]
-        )
+        ) for _ in range(5)]
         self.optimizers.append(self.optimizer_g)
+        
+        
+        # optimizers for net_dc
+        optim_params = []
+        for k, v in self.net_dc.named_parameters():
+            if v.requires_grad:
+                optim_params.append(v)
+            else:
+                logger = get_root_logger()
+                logger.warning(f"Params {k} will not be optimized.")
+
+        optim_type = train_opt["optim_dc"].pop("type")
+        self.optimizer_dc = self.get_optimizer(
+            optim_type, optim_params, **train_opt["optim_dc"]
+        )
+
+        self.optimizers.append(self.optimizer_dc)
 
     def feed_data(self, data):
         self.lq = data["lq"].to(self.device, non_blocking=True)
@@ -130,10 +165,17 @@ class SRModel(BaseModel):
             self.gt = data["gt"].to(self.device, non_blocking=True)
 
     def optimize_parameters(self, current_iter):
-        self.net_g.train()
-        self.optimizer_g.zero_grad()
+        ### train to classify the degradation
+        self.net_dc.train()
+        self.optimizer_dc.zero_grad()
+        
+        cls_output = self.net_dc(self.lq, self.lq)
+        max_cls_output_idx = torch.argmax(cls_output, dim=1)
+        
+        self.net_gs[max_cls_output_idx].train()
+        self.optimizer_g[max_cls_output_idx].zero_grad()
 
-        self.output = self.net_g(self.lq)
+        self.output = self.net_gs[max_cls_output_idx](self.lq)
 
         l_total = 0
         loss_dict = OrderedDict()
@@ -160,29 +202,36 @@ class SRModel(BaseModel):
             if l_style is not None:
                 l_total += l_style
                 loss_dict["l_style"] = l_style
-
+         # classify loss
+        if self.cri_classify:
+            l_classify = self.cri_classify(cls_output, self.dataset_idx)
+            l_total += l_classify
+            loss_dict["l_classify"] = l_classify
+            
         l_total.backward()
 
         if self.grad_clip:
-            torch.nn.utils.clip_grad_norm_(self.net_g.parameters(), self.grad_clip)
+            torch.nn.utils.clip_grad_norm_(self.net_gs[max_cls_output_idx].parameters(), self.grad_clip)
 
-        self.optimizer_g.step()
+        self.optimizer_g[max_cls_output_idx].step()
+        self.optimizer_dc.step()
 
         self.log_dict = self.reduce_loss_dict(loss_dict)
 
         if self.ema_decay > 0:
             self.model_ema(decay=self.ema_decay)
-
+        return max_cls_output_idx
+    
     def test(self):
         if hasattr(self, "net_g_ema"):
             self.net_g_ema.eval()
             with torch.no_grad():
                 self.output = self.net_g_ema(self.lq)
         else:
-            self.net_g.eval()
+            self.net_gs.eval()
             with torch.no_grad():
-                self.output = self.net_g(self.lq)
-            self.net_g.train()
+                self.output = self.net_gs(self.lq)
+            self.net_gs.train()
 
     def test_selfensemble(self):
         # TODO: to be tested
@@ -213,10 +262,10 @@ class SRModel(BaseModel):
             with torch.no_grad():
                 out_list = [self.net_g_ema(aug) for aug in lq_list]
         else:
-            self.net_g.eval()
+            self.net_gs.eval()
             with torch.no_grad():
-                out_list = [self.net_g(aug) for aug in lq_list]
-            self.net_g.train()
+                out_list = [self.net_gs(aug) for aug in lq_list]
+            self.net_gs.train()
 
         # merge results
         for i in range(len(out_list)):
@@ -323,10 +372,10 @@ class SRModel(BaseModel):
                         with torch.no_grad():
                             output_tile = self.net_g_ema(input_tile)
                     else:
-                        self.net_g.eval()
+                        self.net_gs.eval()
                         with torch.no_grad():
-                            output_tile = self.net_g(input_tile)
-                        self.net_g.train()
+                            output_tile = self.net_gs(input_tile)
+                        self.net_gs.train()
                 except RuntimeError as error:
                     raise error
 
@@ -526,12 +575,12 @@ class SRModel(BaseModel):
             try:
                 logger.info(
                     get_model_complexity_info(
-                        self.net_g, (3, H, W), print_per_layer_stat=False
+                        self.net_gs, (3, H, W), print_per_layer_stat=False
                     )
                 )
-                logger.info(get_model_activation(self.net_g, (3, H, W)))
+                logger.info(get_model_activation(self.net_gs, (3, H, W)))
                 logger.info(
-                    get_model_flops(self.net_g, (3, H, W), print_per_layer_stat=False)
+                    get_model_flops(self.net_gs, (3, H, W), print_per_layer_stat=False)
                 )
             except:
                 logger.warning("OOM when testing on (1280, 720).")
@@ -578,11 +627,11 @@ class SRModel(BaseModel):
     def save(self, epoch, current_iter):
         if hasattr(self, "net_g_ema"):
             self.save_network(
-                [self.net_g, self.net_g_ema],
+                [self.net_gs, self.net_g_ema],
                 "net_g",
                 current_iter,
                 param_key=["params", "params_ema"],
             )
         else:
-            self.save_network(self.net_g, "net_g", current_iter)
+            self.save_network(self.net_gs, "net_g", current_iter)
         self.save_training_state(epoch, current_iter)

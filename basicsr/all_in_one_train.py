@@ -84,6 +84,7 @@ def create_train_val_dataloader(opt, logger):
     dataset_enlarge_ratio = dataloader_opt.get("dataset_enlarge_ratio", 1)
 
     train_set = ConcatDataset(train_sets, enlarge_ratios)
+    
     train_sampler = EnlargedSampler(
         train_set, opt["world_size"], opt["rank"], dataset_enlarge_ratio
     )
@@ -314,23 +315,23 @@ def train_pipeline(root_path):
         while train_data is not None:
             data_timer.record()
 
-            # # validation
-            # if opt.get("val") is not None and current_iter == start_iter:
-            #     if classify:
-            #         model.validation(val_loader, current_iter, tb_logger, False)
-            #     else:
-            #         if len(val_loaders) > 1:
-            #             logger.warning(
-            #                 "Multiple validation datasets are *only* supported by SRModel."
-            #             )
-            #         for i, val_loader in enumerate(val_loaders):
-            #             model.validation(
-            #                 val_loader,
-            #                 current_iter,
-            #                 tb_logger,
-            #                 opt["val"]["save_img"],
-            #                 # dataset_idx=i,
-            #             )
+            # validation
+            if opt.get("val") is not None and current_iter == start_iter:
+                if classify:
+                    model.validation(val_loader, current_iter, tb_logger, False)
+                else:
+                    if len(val_loaders) > 1:
+                        logger.warning(
+                            "Multiple validation datasets are *only* supported by SRModel."
+                        )
+                    for i, val_loader in enumerate(val_loaders):
+                        model.validation(
+                            val_loader,
+                            current_iter,
+                            tb_logger,
+                            opt["val"]["save_img"],
+                            # dataset_idx=i,
+                        )
 
             if flag_progressive:
                 # print(current_iter, stage, progressive_iters[stage])
@@ -372,7 +373,7 @@ def train_pipeline(root_path):
             )
             # training
             model.feed_data(train_data)
-            model.optimize_parameters(current_iter)
+            max_cls_output_idx = model.optimize_parameters(current_iter)
             iter_timer.record()
             if current_iter == 1:
                 # reset start time in msg_logger for more accurate eta_time
@@ -381,7 +382,7 @@ def train_pipeline(root_path):
             # log
             if current_iter % opt["logger"]["print_freq"] == 0:
                 log_vars = {"epoch": epoch, "iter": current_iter}
-                log_vars.update({"lrs": model.get_current_learning_rate()})
+                log_vars.update({"lrs": model.get_current_learning_rate(max_cls_output_idx)})
                 log_vars.update(
                     {
                         "time": iter_timer.get_avg_time(),
@@ -397,24 +398,24 @@ def train_pipeline(root_path):
                 model.save(epoch, current_iter)
 
             # validation
-            if opt.get("val") is not None and (
-                current_iter % opt["val"]["val_freq"] == 0
-            ):
-                if classify:
-                    model.validation(val_loader, current_iter, tb_logger, False)
-                else:
-                    if len(val_loaders) > 1:
-                        logger.warning(
-                            "Multiple validation datasets are *only* supported by SRModel."
-                        )
-                    for i, val_loader in enumerate(val_loaders):
-                        model.validation(
-                            val_loader,
-                            current_iter,
-                            tb_logger,
-                            opt["val"]["save_img"],
-                            # dataset_idx=i,
-                        )
+            # if opt.get("val") is not None and (
+            #     current_iter % opt["val"]["val_freq"] == 0
+            # ):
+            #     if classify:
+            #         model.validation(val_loader, current_iter, tb_logger, False)
+            #     else:
+            #         if len(val_loaders) > 1:
+            #             logger.warning(
+            #                 "Multiple validation datasets are *only* supported by SRModel."
+            #             )
+            #         for i, val_loader in enumerate(val_loaders):
+            #             model.validation(
+            #                 val_loader,
+            #                 current_iter,
+            #                 tb_logger,
+            #                 opt["val"]["save_img"],
+            #                 # dataset_idx=i,
+            #             )
 
             data_timer.start()
             iter_timer.start()
