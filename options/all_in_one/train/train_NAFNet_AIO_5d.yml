@@ -65,8 +65,8 @@ datasets:
   val_1:
     name: Val_Blur
     type: PairedImageDataset
-    dataroot_gt: /kaggle/input/aio-image-restore/Snow/GT
-    dataroot_lq: /kaggle/input/aio-image-restore/Snow/LQ
+    dataroot_gt: train_data/Blur/GT
+    dataroot_lq: train_data/Blur/LQ
     io_backend:
       type: disk
     num_worker_per_gpu: 1
