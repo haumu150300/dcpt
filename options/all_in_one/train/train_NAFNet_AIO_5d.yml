@@ -18,28 +18,28 @@ datasets:
   #   use_hflip: true
   #   use_rot: true
   #   dataset_enlarge_ratio: 1
-  train_1:
-    name: Dehaze
-    type: PairedImageDehazeDataset
-    dataroot_gt: /kaggle/input/datasets/dexterz15/aio-img-dataset/Haze/GT
-    dataroot_lq: /kaggle/input/datasets/dexterz15/aio-img-dataset/Haze/LQ
-    io_backend:
-      type: disk
-    gt_size: 128
-    use_hflip: true
-    use_rot: true
-    sigma_type: choice for noise 
-    sigma_range: [15, 25, 50]
-  # train_3:
-  #   name: Delowlight
-  #   type: PairedImageDataset
-  #   dataroot_gt: /kaggle/input/aio-image-restore/Lowlight/GT
-  #   dataroot_lq: /kaggle/input/aio-image-restore/Lowlight/LQ
+  # train_1:
+  #   name: Dehaze
+  #   type: PairedImageDehazeDataset
+  #   dataroot_gt: /kaggle/input/datasets/dexterz15/aio-img-dataset/Haze/GT
+  #   dataroot_lq: /kaggle/input/datasets/dexterz15/aio-img-dataset/Haze/LQ
   #   io_backend:
   #     type: disk
   #   gt_size: 128
   #   use_hflip: true
   #   use_rot: true
+  #   sigma_type: choice for noise 
+  #   sigma_range: [15, 25, 50]
+  train_1:
+    name: Delowlight
+    type: PairedImageDataset
+    dataroot_gt: /kaggle/input/datasets/dexterz15/aio-img-dataset/Lowlight/GT
+    dataroot_lq: /kaggle/input/datasets/dexterz15/aio-img-dataset/Lowlight/LQ
+    io_backend:
+      type: disk
+    gt_size: 128
+    use_hflip: true
+    use_rot: true
   # train_4:
   #   name: DeRain
   #   type: PairedImageDataset
@@ -72,29 +72,29 @@ datasets:
   #   num_worker_per_gpu: 1
   #   batch_size_per_gpu: 1
   #   center_crop: 256
-  val_1:
-    name: Val_Haze
-    type: PairedImageDehazeDataset
-    dataroot_gt: /kaggle/input/datasets/dexterz15/aio-img-dataset/Haze/GT
-    dataroot_lq: /kaggle/input/datasets/dexterz15/aio-img-dataset/Haze/LQ
-    io_backend:
-      type: disk
-    sigma_type: constant
-    sigma_range: 25
-    num_worker_per_gpu: 1
-    batch_size_per_gpu: 1
-    center_crop: 256
-  # val_3:
-  #   name: Val_Lowlight
-  #   type: PairedImageDataset
-  #   dataroot_gt: /kaggle/input/aio-image-restore/Snow/GT
-  #   dataroot_lq: /kaggle/input/aio-image-restore/Snow/LQ
+  # val_1:
+  #   name: Val_Haze
+  #   type: PairedImageDehazeDataset
+  #   dataroot_gt: /kaggle/input/datasets/dexterz15/aio-img-dataset/Haze/GT
+  #   dataroot_lq: /kaggle/input/datasets/dexterz15/aio-img-dataset/Haze/LQ
   #   io_backend:
   #     type: disk
-  #   suffix: .png
+  #   sigma_type: constant
+  #   sigma_range: 25
   #   num_worker_per_gpu: 1
   #   batch_size_per_gpu: 1
   #   center_crop: 256
+  val_1:
+    name: Val_Lowlight
+    type: PairedImageDataset
+    dataroot_gt: train_data/Lowlight/GT
+    dataroot_lq: train_data/Lowlight/LQ
+    io_backend:
+      type: disk
+    # suffix: .png
+    num_worker_per_gpu: 1
+    batch_size_per_gpu: 1
+    center_crop: 256
   # val_4:
   #   name: Val_Rain
   #   type: PairedImageDataset
