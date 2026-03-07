@@ -40,7 +40,7 @@ datasets:
   #   gt_size: 128
   #   use_hflip: true
   #   use_rot: true
-  train_4:
+  train_1:
     name: DeRain
     type: PairedImageDataset
     dataroot_gt: /kaggle/input/datasets/dexterz15/aio-img-dataset/Rain/GT
@@ -95,7 +95,7 @@ datasets:
   #   num_worker_per_gpu: 1
   #   batch_size_per_gpu: 1
   #   center_crop: 256
-  val_4:
+  val_1:
     name: Val_Rain
     type: PairedImageDataset
     dataroot_gt: train_data/Rain/GT
