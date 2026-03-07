@@ -30,27 +30,27 @@ datasets:
   #   use_rot: true
   #   sigma_type: choice for noise 
   #   sigma_range: [15, 25, 50]
-  train_1:
-    name: Delowlight
-    type: PairedImageDataset
-    dataroot_gt: /kaggle/input/datasets/dexterz15/aio-img-dataset/Lowlight/GT
-    dataroot_lq: /kaggle/input/datasets/dexterz15/aio-img-dataset/Lowlight/LQ
-    io_backend:
-      type: disk
-    gt_size: 128
-    use_hflip: true
-    use_rot: true
-  # train_4:
-  #   name: DeRain
+  # train_1:
+  #   name: Delowlight
   #   type: PairedImageDataset
-  #   dataroot_gt: /kaggle/input/aio-image-restore/Rain/GT
-  #   dataroot_lq: /kaggle/input/aio-image-restore/Rain/LQ
+  #   dataroot_gt: /kaggle/input/datasets/dexterz15/aio-img-dataset/Lowlight/GT
+  #   dataroot_lq: /kaggle/input/datasets/dexterz15/aio-img-dataset/Lowlight/LQ
   #   io_backend:
   #     type: disk
   #   gt_size: 128
   #   use_hflip: true
   #   use_rot: true
-  #   # dataset_enlarge_ratio: 10
+  train_4:
+    name: DeRain
+    type: PairedImageDataset
+    dataroot_gt: /kaggle/input/datasets/dexterz15/aio-img-dataset/Rain/GT
+    dataroot_lq: /kaggle/input/datasets/dexterz15/aio-img-dataset/Rain/LQ
+    io_backend:
+      type: disk
+    gt_size: 128
+    use_hflip: true
+    use_rot: true
+    # dataset_enlarge_ratio: 10
   # train_5:
   #   name: DeSnow
   #   type: PairedImageDataset
@@ -84,27 +84,27 @@ datasets:
   #   num_worker_per_gpu: 1
   #   batch_size_per_gpu: 1
   #   center_crop: 256
-  val_1:
-    name: Val_Lowlight
-    type: PairedImageDataset
-    dataroot_gt: train_data/Lowlight/GT
-    dataroot_lq: train_data/Lowlight/LQ
-    io_backend:
-      type: disk
-    # suffix: .png
-    num_worker_per_gpu: 1
-    batch_size_per_gpu: 1
-    center_crop: 256
-  # val_4:
-  #   name: Val_Rain
+  # val_1:
+  #   name: Val_Lowlight
   #   type: PairedImageDataset
-  #   dataroot_gt: /kaggle/input/aio-image-restore/Snow/GT
-  #   dataroot_lq: /kaggle/input/aio-image-restore/Snow/LQ
+  #   dataroot_gt: train_data/Lowlight/GT
+  #   dataroot_lq: train_data/Lowlight/LQ
   #   io_backend:
   #     type: disk
+  #   # suffix: .png
   #   num_worker_per_gpu: 1
   #   batch_size_per_gpu: 1
   #   center_crop: 256
+  val_4:
+    name: Val_Rain
+    type: PairedImageDataset
+    dataroot_gt: train_data/Rain/GT
+    dataroot_lq: train_data/Rain/LQ
+    io_backend:
+      type: disk
+    num_worker_per_gpu: 1
+    batch_size_per_gpu: 1
+    center_crop: 256
   # val_5:
   #   name: Val_Snow
   #   type: PairedImageDataset
