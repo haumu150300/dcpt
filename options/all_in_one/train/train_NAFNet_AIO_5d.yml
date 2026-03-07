@@ -10,8 +10,8 @@ datasets:
   train_1:
     name: Deblur
     type: PairedImageDataset
-    dataroot_gt: /kaggle/working/train/Blur/GT
-    dataroot_lq: /kaggle/working/train/Blur/LQ
+    dataroot_gt: /kaggle/input/datasets/dexterz15/aio-img-dataset/Blur/GT
+    dataroot_lq: /kaggle/input/datasets/dexterz15/aio-img-dataset/Blur/LQ
     io_backend:
       type: disk
     gt_size: 128
