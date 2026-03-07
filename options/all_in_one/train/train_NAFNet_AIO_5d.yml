@@ -28,8 +28,8 @@ datasets:
     gt_size: 128
     use_hflip: true
     use_rot: true
-    # sigma_type: choice for noise 
-    # sigma_range: [15, 25, 50]
+    sigma_type: choice for noise 
+    sigma_range: [15, 25, 50]
   # train_3:
   #   name: Delowlight
   #   type: PairedImageDataset
