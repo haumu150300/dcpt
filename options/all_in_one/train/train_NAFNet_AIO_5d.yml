@@ -7,29 +7,29 @@ manual_seed: 0
 
 # dataset and data loader settings
 datasets:
-  train_1:
-    name: Deblur
-    type: PairedImageDataset
-    dataroot_gt: /kaggle/input/datasets/dexterz15/aio-img-dataset/Blur/GT
-    dataroot_lq: /kaggle/input/datasets/dexterz15/aio-img-dataset/Blur/LQ
-    io_backend:
-      type: disk
-    gt_size: 128
-    use_hflip: true
-    use_rot: true
-    dataset_enlarge_ratio: 1
-  # train_2:
-  #   name: Dehaze
-  #   type: PairedImageDehazeDataset
-  #   dataroot_gt: /kaggle/input/aio-image-restore/Haze/GT
-  #   dataroot_lq: /kaggle/input/aio-image-restore/Haze/LQ
+  # train_1:
+  #   name: Deblur
+  #   type: PairedImageDataset
+  #   dataroot_gt: /kaggle/input/datasets/dexterz15/aio-img-dataset/Blur/GT
+  #   dataroot_lq: /kaggle/input/datasets/dexterz15/aio-img-dataset/Blur/LQ
   #   io_backend:
   #     type: disk
   #   gt_size: 128
   #   use_hflip: true
   #   use_rot: true
-  #   # sigma_type: choice for noise 
-  #   # sigma_range: [15, 25, 50]
+  #   dataset_enlarge_ratio: 1
+  train_1:
+    name: Dehaze
+    type: PairedImageDehazeDataset
+    dataroot_gt: /kaggle/input/datasets/dexterz15/aio-img-dataset/Haze/GT
+    dataroot_lq: /kaggle/input/datasets/dexterz15/aio-img-dataset/Haze/LQ
+    io_backend:
+      type: disk
+    gt_size: 128
+    use_hflip: true
+    use_rot: true
+    # sigma_type: choice for noise 
+    # sigma_range: [15, 25, 50]
   # train_3:
   #   name: Delowlight
   #   type: PairedImageDataset
@@ -62,28 +62,28 @@ datasets:
   #   use_hflip: true
   #   use_rot: true
 
-  val_1:
-    name: Val_Blur
-    type: PairedImageDataset
-    dataroot_gt: train_data/Blur/GT
-    dataroot_lq: train_data/Blur/LQ
-    io_backend:
-      type: disk
-    num_worker_per_gpu: 1
-    batch_size_per_gpu: 1
-    center_crop: 256
-  # val_2:
-  #   name: Val_Haze
-  #   type: PairedImageDehazeDataset
-  #   dataroot_gt: /kaggle/input/aio-image-restore/Snow/GT
-  #   dataroot_lq: /kaggle/input/aio-image-restore/Snow/LQ
+  # val_1:
+  #   name: Val_Blur
+  #   type: PairedImageDataset
+  #   dataroot_gt: train_data/Blur/GT
+  #   dataroot_lq: train_data/Blur/LQ
   #   io_backend:
   #     type: disk
-  #   sigma_type: constant
-  #   sigma_range: 25
   #   num_worker_per_gpu: 1
   #   batch_size_per_gpu: 1
   #   center_crop: 256
+  val_1:
+    name: Val_Haze
+    type: PairedImageDehazeDataset
+    dataroot_gt: /kaggle/input/datasets/dexterz15/aio-img-dataset/Haze/GT
+    dataroot_lq: /kaggle/input/datasets/dexterz15/aio-img-dataset/Haze/LQ
+    io_backend:
+      type: disk
+    sigma_type: constant
+    sigma_range: 25
+    num_worker_per_gpu: 1
+    batch_size_per_gpu: 1
+    center_crop: 256
   # val_3:
   #   name: Val_Lowlight
   #   type: PairedImageDataset
