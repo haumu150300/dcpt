@@ -136,10 +136,10 @@ network_g:
 
 find_unused_parameters: false
 
-# path:
-#   pretrain_network_g: dcpt_nafnet_pretrain_5d.pth
-#   strict_load_g: true
-#   resume_state: ~
+path:
+  pretrain_network_g: dcpt_nafnet_pretrain_5d.pth
+  strict_load_g: true
+  resume_state: ~
 
 grad_clip: 0.01
 
