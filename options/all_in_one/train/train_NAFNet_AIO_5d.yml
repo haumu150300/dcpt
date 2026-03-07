@@ -119,7 +119,8 @@ datasets:
 dataloader:
   phase: train
   use_shuffle: true
-  num_worker_per_gpu: 30
+  num_worker_per_gpu: 2
+  batch_size_per_gpu: 30
   dataset_enlarge_ratio: 1
   prefetch_mode: ~
   pin_memory: true
