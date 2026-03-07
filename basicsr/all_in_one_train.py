@@ -397,24 +397,24 @@ def train_pipeline(root_path):
                 model.save(epoch, current_iter)
 
             # validation
-            if opt.get("val") is not None and (
-                current_iter % opt["val"]["val_freq"] == 0
-            ):
-                if classify:
-                    model.validation(val_loader, current_iter, tb_logger, False)
-                else:
-                    if len(val_loaders) > 1:
-                        logger.warning(
-                            "Multiple validation datasets are *only* supported by SRModel."
-                        )
-                    for i, val_loader in enumerate(val_loaders):
-                        model.validation(
-                            val_loader,
-                            current_iter,
-                            tb_logger,
-                            opt["val"]["save_img"],
-                            # dataset_idx=i,
-                        )
+            # if opt.get("val") is not None and (
+            #     current_iter % opt["val"]["val_freq"] == 0
+            # ):
+            #     if classify:
+            #         model.validation(val_loader, current_iter, tb_logger, False)
+            #     else:
+            #         if len(val_loaders) > 1:
+            #             logger.warning(
+            #                 "Multiple validation datasets are *only* supported by SRModel."
+            #             )
+            #         for i, val_loader in enumerate(val_loaders):
+            #             model.validation(
+            #                 val_loader,
+            #                 current_iter,
+            #                 tb_logger,
+            #                 opt["val"]["save_img"],
+            #                 # dataset_idx=i,
+            #             )
 
             data_timer.start()
             iter_timer.start()

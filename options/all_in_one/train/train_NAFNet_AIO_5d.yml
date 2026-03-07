@@ -1,5 +1,5 @@
 # general settings
-name: train_NAFNet_all_in_one_derain_denoise_dehaze_deblur_lowlight
+name: train_NAFNet_all_in_one_deblur
 model_type: SRModel
 scale: 1
 num_gpu: auto  # set num_gpu: 0 for cpu mode
@@ -8,115 +8,113 @@ manual_seed: 0
 # dataset and data loader settings
 datasets:
   train_1:
-    name: Derain
-    type: PairedImageDataset
-    dataroot_gt: /mnt/nasv3/hjk/DerainDataset/RainTrainHL/norain
-    dataroot_lq: /mnt/nasv3/hjk/DerainDataset/RainTrainHL/rain
-    io_backend:
-      type: disk
-    gt_size: 128
-    use_hflip: true
-    use_rot: true
-    dataset_enlarge_ratio: 300
-    # 3600
-  train_2:
-    name: Denoise
-    type: PairedImageDenoiseDataset
-    dataroot_gt: /mnt/nasv3/hjk/DenoiseDataset/train/DFWB
-    io_backend:
-      type: disk
-    gt_size: 128
-    use_hflip: true
-    use_rot: true
-    sigma_type: choice
-    sigma_range: [15, 25, 50]
-    dataset_enlarge_ratio: 8
-    # 85443
-  train_3:
-    name: Dehaze
-    type: PairedImageDehazeDataset
-    dataroot_gt: /mnt/nasv3/hjk/DehazeDataset/OTS_BETA/original
-    dataroot_lq: /mnt/nasv3/hjk/DehazeDataset/OTS_BETA/synthetic/overall
-    io_backend:
-      type: disk
-    gt_size: 128
-    use_hflip: true
-    use_rot: true
-    # 72135
-  train_4:
-    name: LowLight
-    type: PairedImageDataset
-    dataroot_gt: /mnt/nasv3/hjk/LowLightDataset/lol_v1_train/our485/high
-    dataroot_lq: /mnt/nasv3/hjk/LowLightDataset/lol_v1_train/our485/low
-    io_backend:
-      type: disk
-    gt_size: 128
-    use_hflip: true
-    use_rot: true
-    dataset_enlarge_ratio: 160
-    # 485
-  train_5:
     name: Deblur
     type: PairedImageDataset
-    dataroot_gt: /mnt/nasv3/hjk/DeblurDataset/GoPro/train/target_crops
-    dataroot_lq: /mnt/nasv3/hjk/DeblurDataset/GoPro/train/input_crops
+    dataroot_gt: /kaggle/input/aio-image-restore/Blur/GT
+    dataroot_lq: /kaggle/input/aio-image-restore/Blur/LQ
     io_backend:
       type: disk
     gt_size: 128
     use_hflip: true
     use_rot: true
-    dataset_enlarge_ratio: 5
-    # 16824
+    dataset_enlarge_ratio: 1
+  # train_2:
+  #   name: Dehaze
+  #   type: PairedImageDehazeDataset
+  #   dataroot_gt: /kaggle/input/aio-image-restore/Haze/GT
+  #   dataroot_lq: /kaggle/input/aio-image-restore/Haze/LQ
+  #   io_backend:
+  #     type: disk
+  #   gt_size: 128
+  #   use_hflip: true
+  #   use_rot: true
+  #   # sigma_type: choice for noise 
+  #   # sigma_range: [15, 25, 50]
+  # train_3:
+  #   name: Delowlight
+  #   type: PairedImageDataset
+  #   dataroot_gt: /kaggle/input/aio-image-restore/Lowlight/GT
+  #   dataroot_lq: /kaggle/input/aio-image-restore/Lowlight/LQ
+  #   io_backend:
+  #     type: disk
+  #   gt_size: 128
+  #   use_hflip: true
+  #   use_rot: true
+  # train_4:
+  #   name: DeRain
+  #   type: PairedImageDataset
+  #   dataroot_gt: /kaggle/input/aio-image-restore/Rain/GT
+  #   dataroot_lq: /kaggle/input/aio-image-restore/Rain/LQ
+  #   io_backend:
+  #     type: disk
+  #   gt_size: 128
+  #   use_hflip: true
+  #   use_rot: true
+  #   # dataset_enlarge_ratio: 10
+  # train_5:
+  #   name: DeSnow
+  #   type: PairedImageDataset
+  #   dataroot_gt: /kaggle/input/aio-image-restore/Snow/GT
+  #   dataroot_lq: /kaggle/input/aio-image-restore/Snow/LQ
+  #   io_backend:
+  #     type: disk
+  #   gt_size: 128
+  #   use_hflip: true
+  #   use_rot: true
 
   val_1:
-    name: Rain100L
+    name: Val_Blur
     type: PairedImageDataset
-    dataroot_gt: /mnt/nasv3/hjk/DerainDataset/100L/Rain100L/norain
-    dataroot_lq: /mnt/nasv3/hjk/DerainDataset/100L/Rain100L/rainy
-    io_backend:
-      type: disk
-    num_worker_per_gpu: 1
-    batch_size_per_gpu: 1
-  val_2:
-    name: CBSD68
-    type: PairedImageDenoiseDataset
-    dataroot_gt: /mnt/nasv3/hjk/drformer_seven/datasets/denoise/test/CBSD68
-    io_backend:
-      type: disk
-    sigma_type: constant
-    sigma_range: 25
-    num_worker_per_gpu: 1
-    batch_size_per_gpu: 1
-  val_3:
-    name: SOTS
-    type: PairedImageDehazeDataset
-    dataroot_gt: /mnt/nasv3/hjk/DehazeDataset/SOTS/outdoor/gt
-    dataroot_lq: /mnt/nasv3/hjk/DehazeDataset/SOTS/outdoor/hazy
-    io_backend:
-      type: disk
-    suffix: .png
-    num_worker_per_gpu: 1
-    batch_size_per_gpu: 1
-  val_4:
-    name: LowLight
-    type: PairedImageDataset
-    dataroot_gt: /mnt/nasv3/hjk/LowLightDataset/lol_v1_eval/high
-    dataroot_lq: /mnt/nasv3/hjk/LowLightDataset/lol_v1_eval/low
-    io_backend:
-      type: disk
-    num_worker_per_gpu: 1
-    batch_size_per_gpu: 1
-    hist: false
-  val_5:
-    name: Gopro
-    type: PairedImageDataset
-    dataroot_gt: /mnt/nasv3/hjk/uformer_dataset/GoPro/test/groundtruth
-    dataroot_lq: /mnt/nasv3/hjk/uformer_dataset/GoPro/test/input
+    dataroot_gt: /kaggle/input/aio-image-restore/Snow/GT
+    dataroot_lq: /kaggle/input/aio-image-restore/Snow/LQ
     io_backend:
       type: disk
     num_worker_per_gpu: 1
     batch_size_per_gpu: 1
     center_crop: 256
+  # val_2:
+  #   name: Val_Haze
+  #   type: PairedImageDehazeDataset
+  #   dataroot_gt: /kaggle/input/aio-image-restore/Snow/GT
+  #   dataroot_lq: /kaggle/input/aio-image-restore/Snow/LQ
+  #   io_backend:
+  #     type: disk
+  #   sigma_type: constant
+  #   sigma_range: 25
+  #   num_worker_per_gpu: 1
+  #   batch_size_per_gpu: 1
+  #   center_crop: 256
+  # val_3:
+  #   name: Val_Lowlight
+  #   type: PairedImageDataset
+  #   dataroot_gt: /kaggle/input/aio-image-restore/Snow/GT
+  #   dataroot_lq: /kaggle/input/aio-image-restore/Snow/LQ
+  #   io_backend:
+  #     type: disk
+  #   suffix: .png
+  #   num_worker_per_gpu: 1
+  #   batch_size_per_gpu: 1
+  #   center_crop: 256
+  # val_4:
+  #   name: Val_Rain
+  #   type: PairedImageDataset
+  #   dataroot_gt: /kaggle/input/aio-image-restore/Snow/GT
+  #   dataroot_lq: /kaggle/input/aio-image-restore/Snow/LQ
+  #   io_backend:
+  #     type: disk
+  #   num_worker_per_gpu: 1
+  #   batch_size_per_gpu: 1
+  #   center_crop: 256
+  # val_5:
+  #   name: Val_Snow
+  #   type: PairedImageDataset
+  #   dataroot_gt: /kaggle/input/aio-image-restore/Snow/GT
+  #   dataroot_lq: /kaggle/input/aio-image-restore/Snow/LQ
+  #   io_backend:
+  #     type: disk
+  #   num_worker_per_gpu: 1
+  #   batch_size_per_gpu: 1
+  #   center_crop: 256
 
 dataloader:
   phase: train
@@ -160,7 +158,7 @@ train:
     restart_weights: [1]
     eta_min: !!float 1e-6
 
-  total_iter: 1000000  # 1000 epoch 1 nnproc
+  total_iter: 100000  # 1000 epoch 1 nnproc
   warmup_iter: -1  # no warm up
 
   # losses
@@ -170,26 +168,26 @@ train:
     reduction: mean
 
 # validation settings
-val:
-  val_freq: !!float 2e4
-  save_img: false
+# val:
+#   val_freq: !!float 2e4
+#   save_img: false
 
-  metrics:
-    psnr:
-      type: calculate_psnr
-      crop_border: 0
-      test_y_channel: false
-      image_range: 255.0
-    ssim:
-      type: calculate_ssim
-      crop_border: 0
-      test_y_channel: false
-      image_range: 255.0
+#   metrics:
+#     psnr:
+#       type: calculate_psnr
+#       crop_border: 0
+#       test_y_channel: false
+#       image_range: 255.0
+#     ssim:
+#       type: calculate_ssim
+#       crop_border: 0
+#       test_y_channel: false
+#       image_range: 255.0
 
 # logging settings
 logger:
   print_freq: 100
-  save_checkpoint_freq: !!float 2e4
+  save_checkpoint_freq: !!float 1e4
   use_tb_logger: true
   wandb:
     project: ~
