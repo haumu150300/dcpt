@@ -265,7 +265,7 @@ class NAFNetBaseline(nn.Module):
             x = x + enc_skip
             decoder = getattr(self, f"decoder{i}")
             x = decoder(x)
-
+            
         if not hook:
 
             x = self.ending(x)

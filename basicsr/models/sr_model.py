@@ -32,30 +32,70 @@ class SRModel(BaseModel):
 
         # define network
         in_channels = opt["network_g"].get("img_channel", 3)
-        self.net_g = build_network(opt["network_g"])
-        self.net_g = self.model_to_device(self.net_g)
+        self.net_gs = [build_network(opt["network_g"]) for _ in range(5)]
+        self.net_gs = [self.model_to_device(netg) for netg in self.net_gs]
+        self.netg_dc = build_network(opt["network_g"])
+        self.netg_dc = self.model_to_device(self.netg_dc)
         h = opt["network_g"].get("h", 128)
-        self.print_network(self.net_g, (1, in_channels, h, h))
+        # self.print_network(self.net_gs, (1, in_channels, h, h))
 
         self.grad_clip = opt.get("grad_clip", 0)
 
         # load pretrained models
-        # load_path = self.opt["path"].get("pretrain_network_g", None)
-        # if load_path is not None:
-        #     param_key = self.opt["path"].get("param_key_g", "params")
-        #     self.load_network(
-        #         self.net_g,
-        #         load_path,
-        #         self.opt["path"].get("strict_load_g", True),
-        #         param_key,
-        #         self.opt.get("remove_norm", False),
-        #     )
+        if self.opt["path"].get("pretrain_network_g", None):
+            load_path_blur = self.opt["path"].get(f"pretrain_blurnet_g_latest", None)
+            load_path_haze = self.opt["path"].get(f"pretrain_hazenet_g_latest", None)
+            load_path_rain = self.opt["path"].get(f"pretrain_rainnet_g_latest", None)
+            load_path_snow = self.opt["path"].get(f"pretrain_snownet_g_latest", None)
+            load_path_lowlight = self.opt["path"].get(f"pretrain_lowlightnet_g_latest", None)
+            load_path_netg_dc = self.opt["path"].get(f"pretrain_netg_dc_latest", None)
+            param_key = self.opt["path"].get("param_key_g", "params")
+            
+            for i, load_path in enumerate([load_path_blur, load_path_haze, load_path_rain, load_path_snow, load_path_lowlight]):
+                self.load_network(
+                        self.net_gs[i],
+                        load_path,
+                        self.opt["path"].get(f"strict_load_g_{i}", True),
+                        param_key,
+                        self.opt.get("remove_norm", False),
+                    )
+            self.load_network(
+                        self.netg_dc,
+                        load_path_netg_dc,
+                        self.opt["path"].get(f"strict_load_g_{i}", True),
+                        param_key,
+                        self.opt.get("remove_norm", False),
+                    )
+        
+        self.net_dc = build_network(opt["network_dc"])
+        self.net_dc = self.model_to_device(self.net_dc)
+        
+        load_path_dc = self.opt["path"].get("pretrain_network_dc", None)
+        if load_path_dc is not None:
+            param_key = self.opt["path"].get("param_key_dc", "params")
+            self.load_network(
+                self.net_dc,
+                load_path_dc,
+                self.opt["path"].get("strict_load_dc", True),
+                param_key,
+                self.opt.get("remove_norm", False),
+            )
+        
+         # hook net_g here
+        self.hook_outputs = list()
 
+        self.hooks = list()
+        hook_names = self.opt.get("hook_names", None)
+        for name, module in self.netg_dc.named_modules():
+            if hook_names in name and name.count(".") == 1:
+                hook = module.register_forward_hook(self.hook_forward_fn)
+                self.hooks.append(hook)
+                
         if self.is_train:
             self.init_training_settings()
 
     def init_training_settings(self):
-        self.net_g.train()
+        self.net_gs.train()
         train_opt = self.opt["train"]
 
         self.ema_decay = train_opt.get("ema_decay", 0)
@@ -108,10 +148,15 @@ class SRModel(BaseModel):
         self.setup_optimizers()
         self.setup_schedulers()
 
+    def hook_forward_fn(self, module, input, output):  # noqa
+        if isinstance(output, tuple):
+            output = output[-1]
+        self.hook_outputs.append(output)
+        
     def setup_optimizers(self):
         train_opt = self.opt["train"]
         optim_params = []
-        for k, v in self.net_g.named_parameters():
+        for k, v in self.net_gs.named_parameters():
             if v.requires_grad:
                 optim_params.append(v)
             else:
@@ -130,10 +175,10 @@ class SRModel(BaseModel):
             self.gt = data["gt"].to(self.device, non_blocking=True)
 
     def optimize_parameters(self, current_iter):
-        self.net_g.train()
+        self.net_gs.train()
         self.optimizer_g.zero_grad()
 
-        self.output = self.net_g(self.lq)
+        self.output = self.net_gs(self.lq)
 
         l_total = 0
         loss_dict = OrderedDict()
@@ -164,7 +209,7 @@ class SRModel(BaseModel):
         l_total.backward()
 
         if self.grad_clip:
-            torch.nn.utils.clip_grad_norm_(self.net_g.parameters(), self.grad_clip)
+            torch.nn.utils.clip_grad_norm_(self.net_gs.parameters(), self.grad_clip)
 
         self.optimizer_g.step()
 
@@ -179,10 +224,15 @@ class SRModel(BaseModel):
             with torch.no_grad():
                 self.output = self.net_g_ema(self.lq)
         else:
-            self.net_g.eval()
+            self.netg_dc.eval()
+            self.net_dc.eval()
+            self.netg_dc(self.lq, hook=True)
+            cls_max_idx = self.net_dc(self.lq, self.hook_outputs[::-1]).argmax(dim=1)
+            netg_model = self.net_gs[cls_max_idx]
+            netg_model.eval()
             with torch.no_grad():
-                self.output = self.net_g(self.lq)
-            self.net_g.train()
+                self.output = netg_model(self.lq)
+            netg_model.train()
 
     def test_selfensemble(self):
         # TODO: to be tested
@@ -213,10 +263,10 @@ class SRModel(BaseModel):
             with torch.no_grad():
                 out_list = [self.net_g_ema(aug) for aug in lq_list]
         else:
-            self.net_g.eval()
+            self.net_gs.eval()
             with torch.no_grad():
-                out_list = [self.net_g(aug) for aug in lq_list]
-            self.net_g.train()
+                out_list = [self.net_gs(aug) for aug in lq_list]
+            self.net_gs.train()
 
         # merge results
         for i in range(len(out_list)):
@@ -323,10 +373,10 @@ class SRModel(BaseModel):
                         with torch.no_grad():
                             output_tile = self.net_g_ema(input_tile)
                     else:
-                        self.net_g.eval()
+                        self.net_gs.eval()
                         with torch.no_grad():
-                            output_tile = self.net_g(input_tile)
-                        self.net_g.train()
+                            output_tile = self.net_gs(input_tile)
+                        self.net_gs.train()
                 except RuntimeError as error:
                     raise error
 
@@ -526,12 +576,12 @@ class SRModel(BaseModel):
             try:
                 logger.info(
                     get_model_complexity_info(
-                        self.net_g, (3, H, W), print_per_layer_stat=False
+                        self.net_gs, (3, H, W), print_per_layer_stat=False
                     )
                 )
-                logger.info(get_model_activation(self.net_g, (3, H, W)))
+                logger.info(get_model_activation(self.net_gs, (3, H, W)))
                 logger.info(
-                    get_model_flops(self.net_g, (3, H, W), print_per_layer_stat=False)
+                    get_model_flops(self.net_gs, (3, H, W), print_per_layer_stat=False)
                 )
             except:
                 logger.warning("OOM when testing on (1280, 720).")
@@ -578,11 +628,11 @@ class SRModel(BaseModel):
     def save(self, epoch, current_iter):
         if hasattr(self, "net_g_ema"):
             self.save_network(
-                [self.net_g, self.net_g_ema],
+                [self.net_gs, self.net_g_ema],
                 "net_g",
                 current_iter,
                 param_key=["params", "params_ema"],
             )
         else:
-            self.save_network(self.net_g, "net_g", current_iter)
+            self.save_network(self.net_gs, "net_g", current_iter)
         self.save_training_state(epoch, current_iter)

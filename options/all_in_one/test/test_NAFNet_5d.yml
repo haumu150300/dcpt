@@ -9,42 +9,15 @@ manual_seed: 0
 # dataset and data loader settings
 datasets:
   test_1:
-    name: Rain100L
+    name: val_img
     type: PairedImageDataset
-    dataroot_gt: /mnt/nasv3/hjk/DerainDataset/100L/Rain100L/norain
-    dataroot_lq: /mnt/nasv3/hjk/DerainDataset/100L/Rain100L/rainy
+    # dataroot_lq: /content/drive/MyDrive/Collab_storage/img_restoration/val_LQ/LQ
+    dataroot_gt: I:\learning\aivn\vlm\image_restoration\foundir\dataset\Val_LQ\LQ
+    dataroot_lq: I:\learning\aivn\vlm\image_restoration\foundir\dataset\Val_LQ\LQ
     io_backend:
       type: disk
-  test_2:
-    name: CBSD68
-    type: PairedImageDenoiseDataset
-    dataroot_gt: /mnt/nasv3/hjk/drformer/datasets/denoise/test/CBSD68
-    io_backend:
-      type: disk
-    sigma_type: constant
-    sigma_range: 25
-  test_3:
-    name: SOTS
-    type: PairedImageDehazeDataset
-    dataroot_gt: /mnt/nasv3/hjk/DehazeDataset/SOTS/outdoor/gt
-    dataroot_lq: /mnt/nasv3/hjk/DehazeDataset/SOTS/outdoor/hazy
-    io_backend:
-      type: disk
-    suffix: .png
-  test_4:
-    name: deblur
-    type: PairedImageDataset
-    dataroot_gt: /mnt/nasv3/hjk/uformer_dataset/GoPro/test/groundtruth
-    dataroot_lq: /mnt/nasv3/hjk/uformer_dataset/GoPro/test/input
-    io_backend:
-      type: disk
-  test_5:
-    name: LowLight
-    type: PairedImageDataset
-    dataroot_gt: /mnt/nasv3/hjk/LowLightDataset/lol_v1_eval/high
-    dataroot_lq: /mnt/nasv3/hjk/LowLightDataset/lol_v1_eval/low
-    io_backend:
-      type: disk
+
+hook_names: decoder
 
 # network structures
 network_g:
@@ -55,10 +28,23 @@ network_g:
   dec_blk_nums: [1, 1, 1, 1]
   window_size: 16 
 
+network_dc:
+  type: PromptIR_NoImg_DC
+  feature_dims: [64, 128, 256, 512]
+  num_classes: 5
+
 path:
-  pretrain_network_g: pretrained_models/dcpt_nafnet_5d.pth
+  pretrain_blurnet_g_latest: pretrained_models/blurnet_g_latest.pth
+  pretrain_hazenet_g_latest: pretrained_models/hazenet_g_latest.pth
+  pretrain_rainnet_g_latest: pretrained_models/rainnet_g_latest.pth
+  pretrain_snownet_g_latest: pretrained_models/snownet_g_latest.pth
+  pretrain_lowlightnet_g_latest: pretrained_models/lowlightnet_g_latest.pth
+  pretrain_netg_dc_latest: pretrained_models/net_g_182000.pth
+  pretrain_network_dc: pretrained_models/net_dc_178000.pth
   param_key_g: params_ema
   strict_load_g: true
+  resume_state: ~
+ 
 
 # validation settings
 val:

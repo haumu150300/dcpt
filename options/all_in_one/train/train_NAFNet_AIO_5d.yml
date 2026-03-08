@@ -136,9 +136,14 @@ network_g:
 find_unused_parameters: false
 
 path:
-  # pretrain_network_g: dcpt_nafnet_pretrain_5d.pth
-  pretrain_network_g: ~
-  strict_load_g: false
+  pretrain_blurnet_g_latest: blurnet_g_latest.pth
+  pretrain_hazenet_g_latest: hazenet_g_latest.pth
+  pretrain_rainnet_g_latest: rainnet_g_latest.pth
+  pretrain_snownet_g_latest: snownet_g_latest.pth
+  pretrain_lowlightnet_g_latest: lowlightnet_g_latest.pth
+  pretrain_network_dc: netdc_latest.pth
+  param_key_g: params_ema
+  strict_load_g: true
   resume_state: ~
 
 grad_clip: 0.01

@@ -53,8 +53,8 @@ def make_exp_dirs(opt):
             or ("param_key" in key)
         ):
             continue
-        else:
-            os.makedirs(path, exist_ok=True)
+        # else:
+        #     os.makedirs(path, exist_ok=True)
 
 
 def scandir(dir_path, suffix=None, recursive=False, full_path=False):
