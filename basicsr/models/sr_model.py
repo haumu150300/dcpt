@@ -88,6 +88,7 @@ class SRModel(BaseModel):
         hook_names = self.opt.get("hook_names", None)
         for name, module in self.netg_dc.named_modules():
             if hook_names in name and name.count(".") == 1:
+                print('register hook for module:', name)
                 hook = module.register_forward_hook(self.hook_forward_fn)
                 self.hooks.append(hook)
                 
@@ -151,6 +152,7 @@ class SRModel(BaseModel):
     def hook_forward_fn(self, module, input, output):  # noqa
         if isinstance(output, tuple):
             output = output[-1]
+        print('hook_forward_fn output shape:', output.shape)
         self.hook_outputs.append(output)
         
     def setup_optimizers(self):
@@ -226,9 +228,11 @@ class SRModel(BaseModel):
         else:
             self.netg_dc.eval()
             self.net_dc.eval()
-            self.netg_dc(self.lq, hook=True)
-            cls_max_idx = self.net_dc(None, self.hook_outputs[::-1]).argmax(dim=1)
+            self.hook_outputs = list()
             with torch.no_grad():
+                self.netg_dc(self.lq, hook=True)
+                print('self.hook_outputs shapes:', len(self.hook_outputs))
+                cls_max_idx = self.net_dc(None, self.hook_outputs[::-1]).argmax(dim=1)
                 netg_model = self.net_gs[cls_max_idx.item()]
                 netg_model.eval()
                 self.output = netg_model(self.lq)
