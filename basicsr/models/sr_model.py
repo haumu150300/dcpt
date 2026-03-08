@@ -529,9 +529,10 @@ class SRModel(BaseModel):
                             save_img_path = osp.join(
                                 self.opt["path"]["visualization"],
                                 dataset_name,
-                                f'{img_name}_{self.opt["name"]}.png',
+                                f'{img_name}.jpg',
                             )
                     imwrite(sr_img, save_img_path, depth=depth)
+                    print('Saved image:', save_img_path)
 
             if use_pbar:
                 pbar.update(1)
