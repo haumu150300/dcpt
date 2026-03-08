@@ -45,9 +45,9 @@ class SRModel(BaseModel):
         if self.opt["path"].get("pretrain_network_g", None):
             load_path_blur = self.opt["path"].get(f"pretrain_blurnet_g_latest", None)
             load_path_haze = self.opt["path"].get(f"pretrain_hazenet_g_latest", None)
+            load_path_lowlight = self.opt["path"].get(f"pretrain_lowlightnet_g_latest", None)
             load_path_rain = self.opt["path"].get(f"pretrain_rainnet_g_latest", None)
             load_path_snow = self.opt["path"].get(f"pretrain_snownet_g_latest", None)
-            load_path_lowlight = self.opt["path"].get(f"pretrain_lowlightnet_g_latest", None)
             load_path_netg_dc = self.opt["path"].get(f"pretrain_netg_dc_latest", None)
             param_key = self.opt["path"].get("param_key_g", "params")
             
@@ -227,7 +227,8 @@ class SRModel(BaseModel):
             self.netg_dc.eval()
             self.net_dc.eval()
             self.netg_dc(self.lq, hook=True)
-            cls_max_idx = self.net_dc(self.lq, self.hook_outputs[::-1]).argmax(dim=1)
+            
+            cls_max_idx = self.net_dc(None, self.hook_outputs[::-1]).argmax(dim=1)
             netg_model = self.net_gs[cls_max_idx]
             netg_model.eval()
             with torch.no_grad():
