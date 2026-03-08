@@ -523,7 +523,7 @@ class SRModel(BaseModel):
                             save_img_path = osp.join(
                                 self.opt["path"]["visualization"],
                                 dataset_name,
-                                f'{img_name}_{self.opt["val"]["suffix"]}.png',
+                                f'{img_name}.jpg',
                             )
                         else:
                             save_img_path = osp.join(
