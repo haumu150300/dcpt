@@ -226,14 +226,13 @@ class SRModel(BaseModel):
         else:
             self.netg_dc.eval()
             self.net_dc.eval()
-             
+            self.netg_dc(self.lq, hook=True)
+            cls_max_idx = self.net_dc(None, self.hook_outputs[::-1]).argmax(dim=1)
             with torch.no_grad():
-                self.netg_dc(self.lq, hook=True)
-                cls_max_idx = self.net_dc(None, self.hook_outputs[::-1]).argmax(dim=1)
                 netg_model = self.net_gs[cls_max_idx.item()]
                 netg_model.eval()
                 self.output = netg_model(self.lq)
-            netg_model.train()
+            # netg_model.train()
 
     def test_selfensemble(self):
         # TODO: to be tested
