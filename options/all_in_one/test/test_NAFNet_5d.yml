@@ -34,13 +34,13 @@ network_dc:
   num_classes: 5
 
 path:
-  pretrain_blurnet_g_latest: pretrained_models/blurnet_g_latest.pth
-  pretrain_hazenet_g_latest: pretrained_models/hazenet_g_latest.pth
-  pretrain_rainnet_g_latest: pretrained_models/rainnet_g_latest.pth
-  pretrain_snownet_g_latest: pretrained_models/snownet_g_latest.pth
-  pretrain_lowlightnet_g_latest: pretrained_models/lowlightnet_g_latest.pth
-  pretrain_netg_dc_latest: pretrained_models/net_g_182000.pth
-  pretrain_network_dc: pretrained_models/net_dc_178000.pth
+  pretrain_blurnet_g_latest: /content/drive/MyDrive/Collab_storage/img_restoration/pretrained/dcpt/pretrained_models/blurnet_g_latest.pth
+  pretrain_hazenet_g_latest: /content/drive/MyDrive/Collab_storage/img_restoration/pretrained/dcpt/pretrained_models/hazenet_g_latest.pth
+  pretrain_rainnet_g_latest: /content/drive/MyDrive/Collab_storage/img_restoration/pretrained/dcpt/pretrained_models/rainnet_g_latest.pth
+  pretrain_snownet_g_latest: /content/drive/MyDrive/Collab_storage/img_restoration/pretrained/dcpt/pretrained_models/snownet_g_latest.pth
+  pretrain_lowlightnet_g_latest: /content/drive/MyDrive/Collab_storage/img_restoration/pretrained/dcpt/pretrained_models/lowlightnet_g_latest.pth
+  pretrain_netg_dc_latest: /content/drive/MyDrive/Collab_storage/img_restoration/pretrained/dcpt/pretrained_models/net_g_182000.pth
+  pretrain_network_dc: /content/drive/MyDrive/Collab_storage/img_restoration/pretrained/dcpt/pretrained_models/net_dc_178000.pth
   param_key_g: params_ema
   strict_load_g: true
   resume_state: ~
