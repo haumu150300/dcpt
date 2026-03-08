@@ -12,8 +12,8 @@ datasets:
     name: val_img
     type: PairedImageDataset
     # dataroot_lq: /content/drive/MyDrive/Collab_storage/img_restoration/val_LQ/LQ
-    dataroot_gt: I:\learning\aivn\vlm\image_restoration\foundir\dataset\Val_LQ\LQ
-    dataroot_lq: I:\learning\aivn\vlm\image_restoration\foundir\dataset\Val_LQ\LQ
+    dataroot_gt: /content/drive/MyDrive/Collab_storage/img_restoration/val_LQ/LQ
+    dataroot_lq: /content/drive/MyDrive/Collab_storage/img_restoration/val_LQ/LQ
     io_backend:
       type: disk
 
